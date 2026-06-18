@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Comidas Argentinas</title>
+
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+body{
+    overflow:hidden;
+    font-family:Arial,sans-serif;
+    background:linear-gradient(#87CEEB,#E6F7FF);
+}
+
+#game{
+    width:100vw;
+    height:100vh;
+    position:relative;
+    overflow:hidden;
+}
+
+#ground{
+    position:absolute;
+    bottom:0;
+    width:100%;
+    height:80px;
+    background:#4CAF50;
+}
+
+#hud{
+    position:absolute;
+    top:10px;
+    left:10px;
+    z-index:999;
+    font-size:28px;
+    font-weight:bold;
+}
+
+.player{
+    position:absolute;
+    width:90px;
+    height:120px;
+    bottom:90px;
+}
+
+.hair{
+    width:85px;
+    height:85px;
+    background:black;
+    border-radius:50%;
+    position:absolute;
+}
+
+.face{
+    width:55px;
+    height:55px;
+    background:#ffd8b0;
+    border-radius:50%;
+    position:absolute;
+    left:15px;
+    top:15px;
+}
+
+.eye{
+    width:6px;
+    height:6px;
+    background:black;
+    border-radius:50%;
+    position:absolute;
+}
+
+.leftEye{
+    left:28px;
+    top:35px;
+}
+
+.rightEye{
+    left:50px;
+    top:35px;
+}
+
+.mouth{
+    position:absolute;
+    left:36px;
+    top:50px;
+    font-size:12px;
+}
+
+.bow{
+    position:absolute;
+    left:30px;
+    top:-10px;
+    font-size:30px;
+}
+
+.body{
+    position:absolute;
+    width:60px;
+    height:55px;
+    background:#ff4d4d;
+    top:70px;
+    left:15px;
+    border-radius:10px;
+}
+
+.item{
+    position:absolute;
+    font-size:42px;
+}
+
+#gameover{
+    position:absolute;
+    top:50%;
+    left:50%;
+    transform:translate(-50%,-50%);
+    font-size:50px;
+    text-align:center;
+    color:red;
+    display:none;
+    z-index:2000;
+}
+
+#controls{
+    position:fixed;
+    bottom:10px;
+    width:100%;
+    display:flex;
+    justify-content:space-between;
+    padding:0 20px;
+    z-index:1500;
+}
+
+.controlBtn{
+    width:90px;
+    height:90px;
+    border:none;
+    border-radius:50%;
+    font-size:40px;
+    background:white;
+    box-shadow:0 0 10px rgba(0,0,0,.4);
+}
+</style>
+</head>
+
+<body>
+
+<div id="game">
+
+<div id="hud">
+Pontos: <span id="score">0</span> |
+Vidas: <span id="lives">❤❤❤</span>
+</div>
+
+<div id="gameover"></div>
+
+<div id="player" class="player">
+
+<div class="hair"></div>
+<div class="face"></div>
+
+<div class="eye leftEye"></div>
+<div class="eye rightEye"></div>
+
+<div class="mouth">◡</div>
+
+<div class="bow">🎀</div>
+
+<div class="body"></div>
+
+</div>
+
+<div id="ground"></div>
+
+</div>
+
+<div id="controls">
+<button id="leftBtn" class="controlBtn">⬅️</button>
+<button id="rightBtn" class="controlBtn">➡️</button>
+</div>
+
+<script>
+
+const player = document.getElementById("player");
+const scoreText = document.getElementById("score");
+const livesText = document.getElementById("lives");
+const gameover = document.getElementById("gameover");
+
+let score = 0;
+let lives = 3;
+let playerX = window.innerWidth/2;
+let gameEnded = false;
+
+player.style.left = playerX + "px";
+
+const goodFoods = [
+"🥟", // empanada
+"🍪", // alfajor
+"🥐", // medialuna
+"🧉"  // mate
+];
+
+const badFoods = [
+"🍔",
+"🍕",
+"🍟",
+"🍣",
+"🌮"
+];
+
+const keys = {};
+
+document.addEventListener("keydown",(e)=>{
+    keys[e.key]=true;
+});
+
+document.addEventListener("keyup",(e)=>{
+    keys[e.key]=false;
+});
+
+const leftBtn = document.getElementById("leftBtn");
+const rightBtn = document.getElementById("rightBtn");
+
+function pressLeft(){
+    keys["ArrowLeft"]=true;
+}
+
+function releaseLeft(){
+    keys["ArrowLeft"]=false;
+}
+
+function pressRight(){
+    keys["ArrowRight"]=true;
+}
+
+function releaseRight(){
+    keys["ArrowRight"]=false;
+}
+
+leftBtn.addEventListener("mousedown",pressLeft);
+leftBtn.addEventListener("mouseup",releaseLeft);
+
+rightBtn.addEventListener("mousedown",pressRight);
+rightBtn.addEventListener("mouseup",releaseRight);
+
+leftBtn.addEventListener("touchstart",pressLeft);
+leftBtn.addEventListener("touchend",releaseLeft);
+
+rightBtn.addEventListener("touchstart",pressRight);
+rightBtn.addEventListener("touchend",releaseRight);
+
+function updatePlayer(){
+
+    if(gameEnded) return;
+
+    if(keys["ArrowLeft"]){
+        playerX -= 10;
+    }
+
+    if(keys["ArrowRight"]){
+        playerX += 10;
+    }
+
+    if(playerX < 0){
+        playerX = 0;
+    }
+
+    if(playerX > window.innerWidth - 90){
+        playerX = window.innerWidth - 90;
+    }
+
+    player.style.left = playerX + "px";
+}
+
+function updateLives(){
+    livesText.innerHTML = "❤".repeat(lives);
+}
+
+function createFood(){
+
+    if(gameEnded) return;
+
+    const item = document.createElement("div");
+
+    item.className = "item";
+
+    const good = Math.random() < 0.7;
+
+    if(good){
+        item.innerHTML =
+        goodFoods[Math.floor(Math.random()*goodFoods.length)];
+        item.dataset.good="1";
+    }else{
+        item.innerHTML =
+        badFoods[Math.floor(Math.random()*badFoods.length)];
+        item.dataset.good="0";
+    }
+
+    item.style.left =
+    Math.random()*(window.innerWidth-50)+"px";
+
+    item.style.top="-50px";
+
+    document.getElementById("game").appendChild(item);
+
+    let y=-50;
+
+    const fall = setInterval(()=>{
+
+        if(gameEnded){
+            clearInterval(fall);
+            return;
+        }
+
+        y += 5;
+
+        item.style.top = y+"px";
+
+        const itemRect = item.getBoundingClientRect();
+        const playerRect = player.getBoundingClientRect();
+
+        const hit =
+            itemRect.left < playerRect.right &&
+            itemRect.right > playerRect.left &&
+            itemRect.top < playerRect.bottom &&
+            itemRect.bottom > playerRect.top;
+
+        if(hit){
+
+            if(item.dataset.good==="1"){
+                score += 10;
+            }else{
+                lives--;
+                updateLives();
+            }
+
+            scoreText.innerHTML = score;
+
+            item.remove();
+
+            clearInterval(fall);
+
+            if(lives <= 0){
+
+                gameEnded = true;
+
+                gameover.style.display="block";
+
+                gameover.innerHTML=
+                "GAME OVER<br><br>Pontos: "+
+                score+
+                "<br><br>Atualize a página para jogar novamente";
+            }
+        }
+
+        if(y > window.innerHeight){
+
+            item.remove();
+            clearInterval(fall);
+        }
+
+    },20);
+}
+
+setInterval(createFood,800);
+
+function gameLoop(){
+
+    updatePlayer();
+
+    requestAnimationFrame(gameLoop);
+}
+
+gameLoop();
+
+</script>
+
+</body>
+</html>
